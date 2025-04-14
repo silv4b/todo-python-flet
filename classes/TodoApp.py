@@ -35,6 +35,7 @@ class TodoApp(ft.Column):
             border_color=ft.Colors.GREY_800,
             focused_border_color=ft.Colors.BLUE_400,
             text_vertical_align=0.5,
+            max_length=28,
         )
 
         self.tasks_view = ft.ListView(

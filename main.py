@@ -9,7 +9,6 @@ def setup_page(page: ft.Page):
     page.window.height = 700
     page.window.width = 400
     page.padding = 20
-    page.scroll = "none"  # scroll desativado na página toda
     page.update()
 
 

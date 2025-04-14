@@ -12,14 +12,23 @@ class Task(ft.Column):
         self.visible = True
 
         self.display_task = ft.Checkbox(
-            value=False, label=self.task_name, on_change=self.status_changed
+            value=False,
+            label=self.task_name,
+            on_change=self.status_changed,
+        )
+
+        # Envolve o Checkbox em uma Row com largura fixa e rolagem
+        task_label_row = ft.Row(
+            controls=[self.display_task],
+            scroll=True,
+            expand=True,
         )
 
         self.edit_name = ft.TextField(expand=True, on_submit=self.save_clicked)
 
         self.display_view = ft.Row(
             controls=[
-                self.display_task,
+                task_label_row,  # Substitui o Checkbox direto pela Row com rolagem
                 ft.Row(
                     controls=[
                         ft.IconButton(
