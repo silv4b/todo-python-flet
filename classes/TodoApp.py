@@ -198,12 +198,40 @@ class TodoApp(ft.Column):
         self.clear_completed_tasks_buttom_enable()
 
     def clear_clicked(self, e):
-        tasks_to_remove = [task for task in self.all_tasks if task.completed]
-        for task in tasks_to_remove:
-            self.all_tasks.remove(task)
-        self.update_tasks_view()
-        self.completed_tasks(self.all_tasks)
-        self.clear_completed_tasks_buttom_enable()
+        print("clear_clicked")
+        # Verifica se há tarefas concluídas antes de mostrar o diálogo
+        if not any(task.completed for task in self.all_tasks):
+            return
+
+        def close_dlg(e):
+            dlg_modal.open = False
+            self.page.update()
+
+        def confirm_clear(e):
+            tasks_to_remove = [task for task in self.all_tasks if task.completed]
+            for task in tasks_to_remove:
+                self.all_tasks.remove(task)
+            self.update_tasks_view()
+            self.completed_tasks(self.all_tasks)
+            self.clear_completed_tasks_buttom_enable()
+            close_dlg(e)
+
+        dlg_modal = ft.AlertDialog(
+            modal=True,
+            title=ft.Text("Confirmar"),
+            content=ft.Text(
+                "Tem certeza que deseja limpar todas as tarefas concluídas?"
+            ),
+            actions=[
+                ft.TextButton("Não", on_click=close_dlg),
+                ft.TextButton("Sim", on_click=confirm_clear),
+            ],
+            actions_alignment=ft.MainAxisAlignment.END,
+        )
+
+        self.page.add(dlg_modal)
+        dlg_modal.open = True
+        self.page.update()
 
     def update_tasks_view(self):
         self.tasks_view.controls.clear()
