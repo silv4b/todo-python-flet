@@ -198,10 +198,9 @@ class TodoApp(ft.Column):
         self.clear_completed_tasks_buttom_enable()
 
     def clear_clicked(self, e):
-        print("clear_clicked")
         # Verifica se há tarefas concluídas antes de mostrar o diálogo
         if not any(task.completed for task in self.all_tasks):
-            return
+            return  # apenas garantia, pois o botão só habilita caso tenha tarefas concluídas
 
         def close_dlg(e):
             dlg_modal.open = False
@@ -215,6 +214,11 @@ class TodoApp(ft.Column):
             self.completed_tasks(self.all_tasks)
             self.clear_completed_tasks_buttom_enable()
             close_dlg(e)
+            self.page.open(
+                ft.SnackBar(
+                    ft.Text(f"Tarefas removidas com sucesso!"), show_close_icon=True
+                )
+            )
 
         dlg_modal = ft.AlertDialog(
             modal=True,
