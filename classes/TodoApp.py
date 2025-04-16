@@ -135,11 +135,16 @@ class TodoApp(ft.Column):
         # Obter altura disponível de forma cross-platform
         if self.page.platform == "windows":
             available_height = self.page.window.height - 300
+            available_width = self.page.window.width
         else:  # Para navegador
             available_height = self.page.height - 300
+            available_width = self.page.width
 
-        print(f"\nPlataforma: {self.page.platform}")
-        print(f"Altura disponível: {available_height}")
+        print(f"\nPlataforma: {self.page.platform.name}")
+        print(
+            f"Altura disponível [Total/Calculada]: {available_height + 300}/{available_height}"
+        )
+        print(f"Largura disponível: {available_width}")
 
         # Define limites mínimos e máximos
         tasks_view_height = available_height

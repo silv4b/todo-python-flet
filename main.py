@@ -6,8 +6,8 @@ from classes.TodoApp import TodoApp
 def setup_page(page: ft.Page):
     page.title = "Minhas Tarefas"
     page.theme_mode = ft.ThemeMode.DARK
-    page.window.height = 700
-    page.window.width = 400
+    page.window.height = 800
+    page.window.width = 500
     page.padding = 20
     page.update()
 
