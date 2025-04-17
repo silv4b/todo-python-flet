@@ -1,4 +1,3 @@
-# main.py
 import flet as ft
 from classes.TodoApp import TodoApp
 
@@ -8,6 +7,7 @@ def setup_page(page: ft.Page):
     page.theme_mode = ft.ThemeMode.DARK
     page.window.height = 800
     page.window.width = 500
+    # page.window.maximized = True
     page.padding = 20
     page.update()
 

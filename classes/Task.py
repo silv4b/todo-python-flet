@@ -1,9 +1,11 @@
 import flet as ft
+from classes.ConfirmationDialog import ConfirmDialog
 
 
 class Task(ft.Column):
-    def __init__(self, task_name, task_status_change, task_delete):
+    def __init__(self, page, task_name, task_status_change, task_delete):
         super().__init__()
+        self.page = page
         self.completed = False
         self.task_name = task_name
         self.task_status_change = task_status_change
@@ -79,7 +81,16 @@ class Task(ft.Column):
         self.update()
 
     def delete_clicked(self, e):
-        self.task_delete(self)
+        def confirm_delete():
+            self.task_delete(self)
+
+        confirm = ConfirmDialog(
+            self.page,
+            "Confirmar exclusão",
+            f'Tem certeza que deseja remover a tarefa "{self.task_name}"?',
+            confirm_delete,
+        )
+        confirm.open()
 
     def status_changed(self, e):
         self.completed = self.display_task.value

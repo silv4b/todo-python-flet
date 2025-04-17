@@ -2,6 +2,7 @@
 import asyncio
 import flet as ft
 from classes.Task import Task
+from classes.ConfirmationDialog import ConfirmDialog
 
 
 class TodoApp(ft.Column):
@@ -184,7 +185,9 @@ class TodoApp(ft.Column):
 
     def add_clicked(self, e):
         if self.new_task.value.strip():
-            task = Task(self.new_task.value, self.status_changed, self.task_delete)
+            task = Task(
+                self.page, self.new_task.value, self.status_changed, self.task_delete
+            )
             self.all_tasks.append(task)
             self.new_task.value = ""
             self.new_task.focus()
@@ -203,44 +206,28 @@ class TodoApp(ft.Column):
         self.clear_completed_tasks_buttom_enable()
 
     def clear_clicked(self, e):
-        # Verifica se há tarefas concluídas antes de mostrar o diálogo
-        if not any(task.completed for task in self.all_tasks):
-            return  # apenas garantia, pois o botão só habilita caso tenha tarefas concluídas
 
-        def close_dlg(e):
-            dlg_modal.open = False
-            self.page.update()
-
-        def confirm_clear(e):
+        def confirm_clear():
             tasks_to_remove = [task for task in self.all_tasks if task.completed]
             for task in tasks_to_remove:
                 self.all_tasks.remove(task)
             self.update_tasks_view()
             self.completed_tasks(self.all_tasks)
             self.clear_completed_tasks_buttom_enable()
-            close_dlg(e)
             self.page.open(
                 ft.SnackBar(
-                    ft.Text(f"Tarefas removidas com sucesso!"), show_close_icon=True
+                    ft.Text("Tarefas removidas com sucesso!"), show_close_icon=True
                 )
             )
 
-        dlg_modal = ft.AlertDialog(
-            modal=True,
-            title=ft.Text("Confirmar"),
-            content=ft.Text(
-                "Tem certeza que deseja limpar todas as tarefas concluídas?"
-            ),
-            actions=[
-                ft.TextButton("Não", on_click=close_dlg),
-                ft.TextButton("Sim", on_click=confirm_clear),
-            ],
-            actions_alignment=ft.MainAxisAlignment.END,
+        confirm_dialog = ConfirmDialog(
+            self.page,
+            "Confirmar",
+            "Tem certeza que deseja limpar todas as tarefas concluídas?",
+            confirm_clear,
         )
 
-        self.page.add(dlg_modal)
-        dlg_modal.open = True
-        self.page.update()
+        confirm_dialog.open()
 
     def update_tasks_view(self):
         self.tasks_view.controls.clear()
