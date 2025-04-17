@@ -1,4 +1,6 @@
 import flet as ft
+import asyncio
+from classes.db import init_db
 from classes.TodoApp import TodoApp
 
 
@@ -7,7 +9,6 @@ def setup_page(page: ft.Page):
     page.theme_mode = ft.ThemeMode.DARK
     page.window.height = 800
     page.window.width = 500
-    # page.window.maximized = True
     page.padding = 20
     page.update()
 
@@ -17,7 +18,6 @@ def main(page: ft.Page):
 
     app = TodoApp(page)
 
-    # Adicionando a Row com alinhamento e largura fixada para centralizar o app
     page.add(
         ft.Row(
             controls=[
@@ -28,9 +28,12 @@ def main(page: ft.Page):
                     expand=True,
                 )
             ],
-            alignment=ft.MainAxisAlignment.CENTER,  # Centraliza a Row horizontalmente
+            alignment=ft.MainAxisAlignment.CENTER,
         )
     )
 
 
-ft.app(target=main)
+if __name__ == "__main__":
+    # Inicializa o banco de dados antes de iniciar a interface
+    asyncio.run(init_db())
+    ft.app(target=main)
