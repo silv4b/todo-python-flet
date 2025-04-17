@@ -1,17 +1,20 @@
 # classes/ConfirmDialog.py
+from typing import Callable
 import flet as ft
 
 
 class ConfirmDialog:
-    def __init__(self, page: ft.Page, title: str, message: str, on_confirm):
+    def __init__(
+        self, page: ft.Page, title: str, message: str, on_confirm: Callable[[], None]
+    ):
         self.page = page
         self.on_confirm = on_confirm
 
-        def close_dlg(e=None):
+        def close_dlg(event: ft.ControlEvent = None):
             self.dialog.open = False
             self.page.update()
 
-        def handle_confirm(e):
+        def handle_confirm(event: ft.ControlEvent):
             close_dlg()
             on_confirm()
 

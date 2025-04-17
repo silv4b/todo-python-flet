@@ -1,9 +1,16 @@
+from typing import Callable, Self
 import flet as ft
 from classes.ConfirmationDialog import ConfirmDialog
 
 
 class Task(ft.Column):
-    def __init__(self, page, task_name, task_status_change, task_delete):
+    def __init__(
+        self,
+        page: ft.Page,
+        task_name: str,
+        task_status_change: Callable[[Self], None],
+        task_delete: Callable[["Task"], None],
+    ):
         super().__init__()
         self.page = page
         self.completed = False
@@ -16,6 +23,7 @@ class Task(ft.Column):
         self.display_task = ft.Checkbox(
             value=False,
             label=self.task_name,
+            label_style=ft.TextStyle(size=16),
             on_change=self.status_changed,
         )
 
@@ -67,20 +75,20 @@ class Task(ft.Column):
 
         self.controls = [self.display_view, self.edit_view]
 
-    def save_clicked(self, e):
+    def save_clicked(self, event: ft.ControlEvent):
         self.display_task.label = self.edit_name.value
         self.display_view.visible = True
         self.edit_view.visible = False
         self.update()
 
-    def edit_clicked(self, e):
+    def edit_clicked(self, event: ft.ControlEvent):
         self.edit_name.value = self.display_task.label
         self.edit_view.visible = True
         self.display_view.visible = False
         self.edit_name.focus()
         self.update()
 
-    def delete_clicked(self, e):
+    def delete_clicked(self, event: ft.ControlEvent):
         def confirm_delete():
             self.task_delete(self)
 
@@ -92,6 +100,6 @@ class Task(ft.Column):
         )
         confirm.open()
 
-    def status_changed(self, e):
+    def status_changed(self, event: ft.ControlEvent):
         self.completed = self.display_task.value
         self.task_status_change(self)

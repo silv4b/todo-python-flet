@@ -13,7 +13,7 @@ class TodoApp(ft.Column):
         self.expand = True
         self.all_tasks = []
 
-        def clear_text(e):
+        def clear_text(event: ft.ControlEvent):
             self.new_task.value = ""
             self.new_task.suffix.visible = True
             self.new_task.focus()
@@ -132,7 +132,7 @@ class TodoApp(ft.Column):
         self.on_resize(None)
         self.update()
 
-    def on_resize(self, e):
+    def on_resize(self, event: ft.ControlEvent):
         """Calcula o tamanho do listview de acordo com o tamanho da tela"""
         # Obter altura disponível de forma cross-platform
         if self.page.platform == "windows":
@@ -154,7 +154,7 @@ class TodoApp(ft.Column):
         self.tasks_view.height = tasks_view_height
         self.update()
 
-    def toggle_theme(self, e):
+    def toggle_theme(self, event: ft.ControlEvent):
         if self.page.theme_mode == ft.ThemeMode.DARK:
             self.page.theme_mode = ft.ThemeMode.LIGHT
             self.toggle_theme_button.icon = ft.Icons.DARK_MODE
@@ -182,7 +182,7 @@ class TodoApp(ft.Column):
         )
         self.update()
 
-    def add_clicked(self, e):
+    def add_clicked(self, event: ft.ControlEvent):
         if self.new_task.value.strip():
             task = Task(
                 self.page, self.new_task.value, self.status_changed, self.task_delete
@@ -193,7 +193,7 @@ class TodoApp(ft.Column):
             self.update_tasks_view()
             self.completed_tasks(self.all_tasks)
 
-    def status_changed(self, task):
+    def status_changed(self, task: Task):
         self.update_tasks_view()
         self.clear_completed_tasks_buttom_enable()
         self.completed_tasks(self.all_tasks)
@@ -205,7 +205,7 @@ class TodoApp(ft.Column):
         self.clear_completed_tasks_buttom_enable()
         SnackBar(self.page, f"Tarefa {task.task_name} removida com sucesso!")
 
-    def clear_clicked(self, e):
+    def clear_clicked(self, event: ft.ControlEvent):
 
         def confirm_clear():
             tasks_to_remove = [task for task in self.all_tasks if task.completed]
@@ -239,6 +239,6 @@ class TodoApp(ft.Column):
         self.tasks_view.controls.extend(filtered_tasks)
         self.update()
 
-    def tabs_changed(self, e):
-        self.on_resize(e)
+    def tabs_changed(self, event: ft.ControlEvent):
+        self.on_resize(event)
         self.update_tasks_view()
