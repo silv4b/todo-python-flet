@@ -3,6 +3,7 @@ import asyncio
 import flet as ft
 from classes.Task import Task
 from classes.ConfirmationDialog import ConfirmDialog
+from classes.SnackBar import SnackBar
 
 
 class TodoApp(ft.Column):
@@ -141,15 +142,13 @@ class TodoApp(ft.Column):
             available_height = self.page.height - 300
             available_width = self.page.width
 
-        print(f"\nPlataforma: {self.page.platform.name}")
-        print(
-            f"Altura disponível [Total/Calculada]: {available_height + 300}/{available_height}"
-        )
-        print(f"Largura disponível: {available_width}")
+        # print(f"\nPlataforma: {self.page.platform.name}")
+        # print(f"Altura disponível [Total/Calculada]: {available_height + 300}/{available_height}")
+        # print(f"Largura disponível: {available_width}")
 
         # Define limites mínimos e máximos
         tasks_view_height = available_height
-        print(f"Nova altura do ListView: {tasks_view_height}")
+        # print(f"Nova altura do ListView: {tasks_view_height}")
 
         # Atualiza a altura do ListView
         self.tasks_view.height = tasks_view_height
@@ -199,11 +198,12 @@ class TodoApp(ft.Column):
         self.clear_completed_tasks_buttom_enable()
         self.completed_tasks(self.all_tasks)
 
-    def task_delete(self, task):
+    def task_delete(self, task: Task):
         self.all_tasks.remove(task)
         self.update_tasks_view()
         self.completed_tasks(self.all_tasks)
         self.clear_completed_tasks_buttom_enable()
+        SnackBar(self.page, f"Tarefa {task.task_name} removida com sucesso!")
 
     def clear_clicked(self, e):
 
@@ -214,11 +214,8 @@ class TodoApp(ft.Column):
             self.update_tasks_view()
             self.completed_tasks(self.all_tasks)
             self.clear_completed_tasks_buttom_enable()
-            self.page.open(
-                ft.SnackBar(
-                    ft.Text("Tarefas removidas com sucesso!"), show_close_icon=True
-                )
-            )
+
+            SnackBar(self.page, "Tarefas removidas com sucesso!")
 
         confirm_dialog = ConfirmDialog(
             self.page,
