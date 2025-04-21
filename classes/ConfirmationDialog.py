@@ -1,11 +1,16 @@
-# classes/ConfirmDialog.py
+import asyncio
 from typing import Callable
 import flet as ft
 
 
 class ConfirmDialog:
     def __init__(
-        self, page: ft.Page, title: str, message: str, on_confirm: Callable[[], None]
+        self,
+        page: ft.Page,
+        title: str,
+        message: str,
+        on_confirm: Callable[[], None],
+        is_async: bool = False,
     ):
         self.page = page
         self.on_confirm = on_confirm
@@ -16,7 +21,11 @@ class ConfirmDialog:
 
         def handle_confirm(event: ft.ControlEvent):
             close_dlg()
-            on_confirm()
+
+            if not is_async:
+                on_confirm()
+            else:
+                asyncio.run(on_confirm())
 
         self.dialog = ft.AlertDialog(
             modal=True,

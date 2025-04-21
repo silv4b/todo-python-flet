@@ -4,6 +4,14 @@ import flet as ft
 from classes.Task import Task
 from classes.ConfirmationDialog import ConfirmDialog
 from classes.SnackBar import SnackBar
+from database.db import (
+    add_task,
+    get_tasks,
+    update_task_status,
+    delete_task,
+    update_task_name,
+    delete_many_tasks,
+)
 
 
 class TodoApp(ft.Column):
@@ -43,7 +51,7 @@ class TodoApp(ft.Column):
         self.tasks_view = ft.ListView(
             spacing=10,
             auto_scroll=True,
-            height=400,  # Valor inicial
+            height=400,
         )
 
         self.filter = ft.Tabs(
@@ -111,7 +119,6 @@ class TodoApp(ft.Column):
             ],
         )
 
-        # Centraliza o app e limita a largura
         self.controls.append(
             ft.Container(
                 content=content,
@@ -122,37 +129,52 @@ class TodoApp(ft.Column):
             )
         )
 
-        # Define o on_resize para ajustar a altura da lista dinamicamente
         self.page.on_resized = self.on_resize
         self.page.run_task(self.initial_resize)
+        self.page.run_task(self.load_tasks_from_db)
 
     async def initial_resize(self):
-        """Executa o redimensionamento após a página carregar"""
-        await asyncio.sleep(0.2)  # Espera a página renderizar
+        await asyncio.sleep(0.2)
         self.on_resize(None)
         self.update()
 
+    async def task_edit(self, task: Task, new_name: str):
+        if task.task_id:
+            await update_task_name(task.task_id, new_name)
+        self.update_tasks_view()
+        SnackBar(self.page, f"Tarefa atualizada para '{new_name}'!")
+
     def on_resize(self, event: ft.ControlEvent):
         """Calcula o tamanho do listview de acordo com o tamanho da tela"""
-        # Obter altura disponível de forma cross-platform
         if self.page.platform == "windows":
             available_height = self.page.window.height - 300
             available_width = self.page.window.width
-        else:  # Para navegador
+        else:
             available_height = self.page.height - 300
             available_width = self.page.width
 
-        # print(f"\nPlataforma: {self.page.platform.name}")
-        # print(f"Altura disponível [Total/Calculada]: {available_height + 300}/{available_height}")
-        # print(f"Largura disponível: {available_width}")
-
-        # Define limites mínimos e máximos
         tasks_view_height = available_height
-        # print(f"Nova altura do ListView: {tasks_view_height}")
-
-        # Atualiza a altura do ListView
         self.tasks_view.height = tasks_view_height
         self.update()
+
+    async def load_tasks_from_db(self):
+        """Recupera todas as tarefas do banco de dados"""
+        db_tasks = await get_tasks()
+        for task in db_tasks:
+            self.all_tasks.append(
+                Task(
+                    self.page,
+                    task.name,
+                    self.status_changed,
+                    self.task_delete,
+                    self.task_edit,
+                    task.completed,
+                    task.id,
+                )
+            )
+        self.update_tasks_view()
+        self.completed_tasks(self.all_tasks)
+        self.clear_completed_tasks_buttom_enable()
 
     def toggle_theme(self, event: ft.ControlEvent):
         if self.page.theme_mode == ft.ThemeMode.DARK:
@@ -182,48 +204,63 @@ class TodoApp(ft.Column):
         )
         self.update()
 
-    def add_clicked(self, event: ft.ControlEvent):
+    async def add_clicked(self, event: ft.ControlEvent):
         if self.new_task.value.strip():
+            db_task = await add_task(self.new_task.value.strip())
             task = Task(
-                self.page, self.new_task.value, self.status_changed, self.task_delete
+                self.page,
+                db_task.name,
+                self.status_changed,
+                self.task_delete,
+                self.task_edit,
+                False,
+                db_task.id,
             )
             self.all_tasks.append(task)
             self.new_task.value = ""
             self.new_task.focus()
             self.update_tasks_view()
             self.completed_tasks(self.all_tasks)
+            SnackBar(self.page, f"Tarefa '{task.task_name}' adicionada com sucesso!")
 
-    def status_changed(self, task: Task):
+    async def status_changed(self, task: Task):
+        await update_task_status(task.task_id, task.completed)
         self.update_tasks_view()
         self.clear_completed_tasks_buttom_enable()
         self.completed_tasks(self.all_tasks)
 
-    def task_delete(self, task: Task):
+    async def task_delete(self, task: Task):
+        if task.task_id:
+            await delete_task(task.task_id)
+
         self.all_tasks.remove(task)
         self.update_tasks_view()
         self.completed_tasks(self.all_tasks)
         self.clear_completed_tasks_buttom_enable()
-        SnackBar(self.page, f"Tarefa {task.task_name} removida com sucesso!")
+        SnackBar(self.page, f"Tarefa '{task.task_name}' removida com sucesso!")
 
-    def clear_clicked(self, event: ft.ControlEvent):
-
-        def confirm_clear():
+    async def clear_clicked(self, event: ft.ControlEvent):
+        async def confirm_clear():
             tasks_to_remove = [task for task in self.all_tasks if task.completed]
-            for task in tasks_to_remove:
-                self.all_tasks.remove(task)
+            task_ids = [task.task_id for task in tasks_to_remove if task.task_id]
+
+            if task_ids:
+                await delete_many_tasks(task_ids)
+
+            self.all_tasks = [task for task in self.all_tasks if not task.completed]
+
             self.update_tasks_view()
             self.completed_tasks(self.all_tasks)
             self.clear_completed_tasks_buttom_enable()
-
-            SnackBar(self.page, "Tarefas removidas com sucesso!")
+            SnackBar(self.page, f"{len(tasks_to_remove)} tarefas concluídas removidas!")
 
         confirm_dialog = ConfirmDialog(
             self.page,
             "Confirmar",
             "Tem certeza que deseja limpar todas as tarefas concluídas?",
             confirm_clear,
+            True,
         )
-
         confirm_dialog.open()
 
     def update_tasks_view(self):

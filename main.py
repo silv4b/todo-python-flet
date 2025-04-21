@@ -1,6 +1,6 @@
 import flet as ft
 import asyncio
-from classes.db import init_db
+from database.db import init_db
 from classes.TodoApp import TodoApp
 
 
