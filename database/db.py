@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Boolean, select, update, delete
+from sqlalchemy import Column, Integer, String, Boolean, select, delete
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from sqlalchemy.orm import declarative_base, sessionmaker
 
