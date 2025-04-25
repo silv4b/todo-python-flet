@@ -1,0 +1,47 @@
+.
+├── build
+│   ├── .hash
+│   │   ├── icons
+│   │   ├── package
+│   │   ├── splashes
+│   │   ├── template-1
+│   │   └── template-2
+│   ├── apk
+│   │   ├── app-release.apk
+│   │   └── app-release.apk.sha1
+│   ├── flutter
+│   │   ├── .gitignore
+│   │   ├── .metadata
+│   │   ├── .vars
+│   │   ├── README.md
+│   │   ├── analysis_options.yaml
+│   │   ├── android
+│   │   ├── app
+│   │   ├── images
+│   │   ├── ios
+│   │   ├── linux
+│   │   ├── macos
+│   │   ├── pubspec.yaml
+│   │   ├── web
+│   │   └── windows
+│   └── site-packages
+│       ├── arm64-v8a
+│       ├── armeabi-v7a
+│       ├── x86
+│       └── x86_64
+├── tree.txt
+├── .gitignore
+├── .markdownlint.json
+├── README..md
+├── classes
+│   ├── ConfirmationDialog.py
+│   ├── SnackBar.py
+│   ├── Task.py
+│   ├── TodoApp.py
+│   └── __init__.py
+├── database
+│   ├── __init__.py
+│   ├── db.md
+│   └── db.py
+├── main.py
+└── todo.db
