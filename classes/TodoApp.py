@@ -131,6 +131,7 @@ class TodoApp(ft.Column):
         self.page.on_resized = self.on_resize
         self.page.run_task(self.initial_resize)
         self.page.run_task(self.load_tasks_from_db)
+        self.page.run_task(self.initial_resize)
 
     async def initial_resize(self):
         await asyncio.sleep(0.2)
