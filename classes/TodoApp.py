@@ -1,6 +1,6 @@
-# classes/TodoApp.py
-import asyncio
 import flet as ft
+from flet import FloatingActionButtonLocation
+import asyncio
 from classes.Task import Task
 from classes.ConfirmationDialog import ConfirmDialog
 from classes.SnackBar import SnackBar
@@ -12,6 +12,7 @@ from database.db import (
     delete_task,
     update_task_name,
     delete_many_tasks,
+    update_current_theme,
 )
 
 
@@ -22,11 +23,19 @@ class TodoApp(ft.Column):
         self.expand = True
         self.all_tasks = []
 
-        def clear_text(event: ft.ControlEvent):
-            self.new_task.value = ""
-            self.new_task.suffix.visible = True
-            self.new_task.focus()
-            self.update()
+        self.floating_button = ft.FloatingActionButton(
+            icon=ft.Icons.CHECK,
+            elevation=90,
+            hover_elevation=40,
+            mini=False,
+            on_click=self.complete_all_tasks,
+        )
+
+        self.page.floating_action_button = self.floating_button
+
+        self.page.floating_action_button_location = (
+            FloatingActionButtonLocation.END_FLOAT
+        )
 
         self.new_task = TextField(
             hint_text="Adicione uma tarefa...",
@@ -75,6 +84,7 @@ class TodoApp(ft.Column):
         content = ft.Column(
             spacing=20,
             controls=[
+                # Título e botão de mudar de tema
                 ft.Row(
                     alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
                     controls=[
@@ -82,12 +92,14 @@ class TodoApp(ft.Column):
                         self.toggle_theme_button,
                     ],
                 ),
+                # Campo de texto e botão de adicionar tarefa
                 ft.Row(
                     controls=[
                         self.new_task,
                         ft.IconButton(icon=ft.Icons.ADD, on_click=self.add_clicked),
                     ],
                 ),
+                # Área das tarefas
                 ft.Container(
                     content=ft.Column(
                         [
@@ -123,8 +135,58 @@ class TodoApp(ft.Column):
         )
 
         self.page.on_resized = self.on_resize
-        self.page.run_task(self.initial_resize)
-        self.page.run_task(self.load_tasks_from_db)
+        self.page.run_task(self.initialize_async)
+
+    async def complete_all_tasks(self, event: ft.ControlEvent):
+        """Marca todas as tarefas visíveis como concluídas"""
+
+        # Verifica se está nas abas permitidas (Todas ou Ativas)
+        if self.filter.selected_index not in [0, 1]:
+            SnackBar(self.page, "Ação disponível apenas nas abas Todas ou Ativas")
+            return
+
+        # Confirmação antes de executar
+        async def confirm_complete():
+            tasks_to_complete = []
+
+            if self.filter.selected_index == 0:  # Tab "Todas"
+                tasks_to_complete = [
+                    task for task in self.all_tasks if not task.completed
+                ]
+            elif self.filter.selected_index == 1:  # Tab "Ativas"
+                tasks_to_complete = [
+                    task for task in self.all_tasks if not task.completed
+                ]
+
+            for task in tasks_to_complete:
+                task.completed = True
+                task.display_task.value = True
+                task.update_task_appearance()
+                if task.task_id:
+                    await update_task_status(task.task_id, True)
+
+            self.update_tasks_view()
+            self.completed_tasks(self.all_tasks)
+            self.clear_completed_tasks_buttom_enable()
+            self.page.update()
+
+            SnackBar(
+                self.page, f"{len(tasks_to_complete)} tarefas marcadas como concluídas!"
+            )
+
+        confirm_dialog = ConfirmDialog(
+            self.page,
+            "Confirmar",
+            f"Deseja marcar todas as tarefas visíveis como concluídas?",
+            confirm_complete,
+            True,
+        )
+
+        confirm_dialog.open()
+
+    async def initialize_async(self):
+        await self.initial_resize()
+        await self.load_tasks_from_db()
 
     async def initial_resize(self):
         await asyncio.sleep(0.5)
@@ -168,14 +230,14 @@ class TodoApp(ft.Column):
         self.update_tasks_view()
         self.completed_tasks(self.all_tasks)
         self.clear_completed_tasks_buttom_enable()
-        self.initial_resize()
+        await self.initial_resize()
 
     def toggle_theme(self, event: ft.ControlEvent):
-        if self.page.theme_mode == ft.ThemeMode.DARK:
-            self.page.theme_mode = ft.ThemeMode.LIGHT
+        if self.page.theme_mode == "DARK":
+            self.page.theme_mode = update_current_theme(1, "LIGHT")
             self.toggle_theme_button.icon = ft.Icons.DARK_MODE
         else:
-            self.page.theme_mode = ft.ThemeMode.DARK
+            self.page.theme_mode = update_current_theme(1, "DARK")
             self.toggle_theme_button.icon = ft.Icons.LIGHT_MODE
         self.page.update()
 
@@ -199,7 +261,6 @@ class TodoApp(ft.Column):
         self.update()
 
     async def add_clicked(self, event: ft.ControlEvent):
-        # if self.new_task.value.strip():
         if self.new_task.value.strip():
             db_task = await add_task(self.new_task.value.strip())
             task = Task(
@@ -217,6 +278,7 @@ class TodoApp(ft.Column):
             self.update_tasks_view()
             self.completed_tasks(self.all_tasks)
             self.on_resize(None)
+
             SnackBar(self.page, f"Tarefa '{task.task_name}' adicionada com sucesso!")
 
     async def status_changed(self, task: Task):

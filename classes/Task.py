@@ -1,6 +1,7 @@
 import asyncio
 from typing import Callable, Self
 import flet as ft
+from classes.SnackBar import SnackBar
 from classes.ConfirmationDialog import ConfirmDialog
 
 
@@ -90,6 +91,10 @@ class Task(ft.Column):
 
     def edit_clicked(self, event: ft.ControlEvent):
         """Ativa o modo de edição da tarefa"""
+        if self.completed:
+            SnackBar(self.page, f"Tarefas concluídas não podem ser editadas!")
+            return
+
         self.edit_name.value = self.task_name
         self.edit_view.visible = True
         self.display_view.visible = False

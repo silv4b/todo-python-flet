@@ -1,12 +1,14 @@
 import flet as ft
 import asyncio
-from database.db import init_db
+from database.db import init_db, get_current_theme
 from classes.TodoApp import TodoApp
 
 
 def setup_page(page: ft.Page):
+    theme: str = get_current_theme(1)
+
     page.title = "Minhas Tarefas"
-    page.theme_mode = ft.ThemeMode.DARK
+    page.theme_mode = theme
     page.window.height = 800
     page.window.width = 500
     page.padding = 20
