@@ -4,6 +4,7 @@ import flet as ft
 from classes.Task import Task
 from classes.ConfirmationDialog import ConfirmDialog
 from classes.SnackBar import SnackBar
+from classes.TextField import TextField
 from database.db import (
     add_task,
     get_tasks,
@@ -27,18 +28,11 @@ class TodoApp(ft.Column):
             self.new_task.focus()
             self.update()
 
-        self.new_task = ft.TextField(
+        self.new_task = TextField(
             hint_text="Adicione uma tarefa...",
             expand=True,
             on_submit=self.add_clicked,
-            prefix_icon=ft.Icons.TASK,
-            suffix=ft.IconButton(
-                icon=ft.Icons.CLOSE,
-                on_click=clear_text,
-                icon_size=18,
-                icon_color=ft.Colors.GREY_600,
-                tooltip="Limpar",
-            ),
+            prefix_icon=ft.Icons.TASK,  # Note ft.icons em vez de ft.Icons
             text_size=16,
             height=48,
             border_radius=8,
@@ -131,10 +125,9 @@ class TodoApp(ft.Column):
         self.page.on_resized = self.on_resize
         self.page.run_task(self.initial_resize)
         self.page.run_task(self.load_tasks_from_db)
-        self.page.run_task(self.initial_resize)
 
     async def initial_resize(self):
-        await asyncio.sleep(0.2)
+        await asyncio.sleep(0.5)
         self.on_resize(None)
         self.update()
 
@@ -175,6 +168,7 @@ class TodoApp(ft.Column):
         self.update_tasks_view()
         self.completed_tasks(self.all_tasks)
         self.clear_completed_tasks_buttom_enable()
+        self.initial_resize()
 
     def toggle_theme(self, event: ft.ControlEvent):
         if self.page.theme_mode == ft.ThemeMode.DARK:
@@ -205,6 +199,7 @@ class TodoApp(ft.Column):
         self.update()
 
     async def add_clicked(self, event: ft.ControlEvent):
+        # if self.new_task.value.strip():
         if self.new_task.value.strip():
             db_task = await add_task(self.new_task.value.strip())
             task = Task(
@@ -221,6 +216,7 @@ class TodoApp(ft.Column):
             self.new_task.focus()
             self.update_tasks_view()
             self.completed_tasks(self.all_tasks)
+            self.on_resize(None)
             SnackBar(self.page, f"Tarefa '{task.task_name}' adicionada com sucesso!")
 
     async def status_changed(self, task: Task):

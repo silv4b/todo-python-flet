@@ -1,6 +1,6 @@
+import flet as ft
 import asyncio
 from typing import Callable
-import flet as ft
 
 
 class ConfirmDialog:
