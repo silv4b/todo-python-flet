@@ -49,17 +49,19 @@ class Task(ft.Column):
                 ),
                 ft.Row(
                     controls=[
-                        ft.IconButton(
-                            ft.Icons.EDIT,
-                            tooltip="Editar Tarefa",
-                            on_click=self.edit_clicked,
-                            icon_color=ft.Colors.GREEN,
-                        ),
-                        ft.IconButton(
-                            ft.Icons.DELETE,
-                            tooltip="Remover Tarefa",
-                            on_click=self.delete_clicked,
-                            icon_color=ft.Colors.RED,
+                        ft.PopupMenuButton(
+                            items=[
+                                ft.PopupMenuItem(
+                                    icon=ft.Icons.EDIT,
+                                    text="Editar Tarefa",
+                                    on_click=self.edit_clicked,
+                                ),
+                                ft.PopupMenuItem(
+                                    icon=ft.Icons.DELETE,
+                                    text="Remover Tarefa",
+                                    on_click=self.delete_clicked,
+                                ),
+                            ]
                         ),
                     ]
                 ),
@@ -92,7 +94,7 @@ class Task(ft.Column):
     def edit_clicked(self, event: ft.ControlEvent):
         """Ativa o modo de edição da tarefa"""
         if self.completed:
-            SnackBar(self.page, f"Tarefas concluídas não podem ser editadas!")
+            SnackBar(self.page, f"Tarefas concluídas não podem ser editadas.")
             return
 
         self.edit_name.value = self.task_name

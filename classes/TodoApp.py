@@ -81,6 +81,13 @@ class TodoApp(ft.Column):
             tooltip="Alternar tema",
         )
 
+        self.limpar_concluidas_item = ft.PopupMenuItem(
+            icon=ft.Icons.REMOVE_DONE,
+            text="Limpar Concluídas",
+            on_click=self.clear_clicked,
+            disabled=not any(task.completed for task in self.all_tasks),
+        )
+
         content = ft.Column(
             spacing=20,
             controls=[
@@ -97,6 +104,11 @@ class TodoApp(ft.Column):
                     controls=[
                         self.new_task,
                         ft.IconButton(icon=ft.Icons.ADD, on_click=self.add_clicked),
+                        ft.PopupMenuButton(
+                            items=[
+                                self.limpar_concluidas_item,
+                            ]
+                        ),
                     ],
                 ),
                 # Área das tarefas
@@ -110,10 +122,10 @@ class TodoApp(ft.Column):
                                 border_radius=10,
                             ),
                             ft.Row(
-                                alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
+                                alignment=ft.MainAxisAlignment.START,
                                 controls=[
                                     self.items_left,
-                                    self.clear_completed_tasks_buttom,
+                                    # self.clear_completed_tasks_buttom,
                                 ],
                             ),
                         ],
@@ -130,7 +142,7 @@ class TodoApp(ft.Column):
                 alignment=ft.alignment.top_center,
                 expand=True,
                 padding=20,
-                width=600,
+                width=700,
             )
         )
 
@@ -142,7 +154,11 @@ class TodoApp(ft.Column):
 
         # Verifica se está nas abas permitidas (Todas ou Ativas)
         if self.filter.selected_index not in [0, 1]:
-            SnackBar(self.page, "Ação disponível apenas nas abas Todas ou Ativas")
+            SnackBar(self.page, "Ação disponível apenas nas abas Todas ou Ativas.")
+            return
+
+        if all(task.completed for task in self.all_tasks):
+            SnackBar(self.page, "Todas as tarefas já estão concluídas.")
             return
 
         # Confirmação antes de executar
@@ -197,16 +213,17 @@ class TodoApp(ft.Column):
         if task.task_id:
             await update_task_name(task.task_id, new_name)
         self.update_tasks_view()
-        SnackBar(self.page, f"Tarefa atualizada para '{new_name}'!")
+        SnackBar(self.page, f"Tarefa atualizada para '{new_name}'.")
 
     def on_resize(self, event: ft.ControlEvent):
         """Calcula o tamanho do listview de acordo com o tamanho da tela"""
+        base_value = 280
         if self.page.platform == "windows":
-            available_height = self.page.window.height - 300
-            available_width = self.page.window.width
+            available_height = self.page.window.height - base_value
+            # available_width = self.page.window.width
         else:
-            available_height = self.page.height - 300
-            available_width = self.page.width
+            available_height = self.page.height - base_value
+            # available_width = self.page.width
 
         tasks_view_height = available_height
         self.tasks_view.height = tasks_view_height
@@ -255,9 +272,9 @@ class TodoApp(ft.Column):
         self.page.update()
 
     def clear_completed_tasks_buttom_enable(self):
-        self.clear_completed_tasks_buttom.disabled = not any(
-            task.completed for task in self.all_tasks
-        )
+        enabled = not any(task.completed for task in self.all_tasks)
+        # Habilita/Desabilita o Limpar Concluídas
+        self.limpar_concluidas_item.disabled = enabled
         self.update()
 
     async def add_clicked(self, event: ft.ControlEvent):
@@ -319,6 +336,7 @@ class TodoApp(ft.Column):
             confirm_clear,
             True,
         )
+
         confirm_dialog.open()
 
     def update_tasks_view(self):

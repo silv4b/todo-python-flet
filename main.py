@@ -9,9 +9,8 @@ def setup_page(page: ft.Page):
 
     page.title = "Minhas Tarefas"
     page.theme_mode = theme
-    page.window.height = 800
-    page.window.width = 500
-    page.padding = 20
+    page.window.height = 900
+    page.window.width = 600
     page.update()
 
 
