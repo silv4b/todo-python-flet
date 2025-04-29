@@ -23,15 +23,13 @@ class TodoApp(ft.Column):
         self.expand = True
         self.all_tasks = []
 
-        self.floating_button = ft.FloatingActionButton(
+        self.page.floating_action_button = ft.FloatingActionButton(
             icon=ft.Icons.CHECK,
             elevation=90,
             hover_elevation=40,
             mini=False,
             on_click=self.complete_all_tasks,
         )
-
-        self.page.floating_action_button = self.floating_button
 
         self.page.floating_action_button_location = (
             FloatingActionButtonLocation.END_FLOAT
@@ -41,7 +39,7 @@ class TodoApp(ft.Column):
             hint_text="Adicione uma tarefa...",
             expand=True,
             on_submit=self.add_clicked,
-            prefix_icon=ft.Icons.TASK,  # Note ft.icons em vez de ft.Icons
+            prefix_icon=ft.Icons.TASK,
             text_size=16,
             height=48,
             border_radius=8,
@@ -69,22 +67,23 @@ class TodoApp(ft.Column):
 
         self.items_left = ft.Text("Nenhuma tarefa.")
 
-        self.clear_completed_tasks_buttom = ft.TextButton(
-            text="Limpar Concluídas",
-            on_click=self.clear_clicked,
-            disabled=True,
-        )
-
         self.toggle_theme_button = ft.IconButton(
             icon=ft.Icons.LIGHT_MODE,
             on_click=self.toggle_theme,
             tooltip="Alternar tema",
         )
 
-        self.limpar_concluidas_item = ft.PopupMenuItem(
+        self.clear_completed_tasks = ft.PopupMenuItem(
             icon=ft.Icons.REMOVE_DONE,
             text="Limpar Concluídas",
             on_click=self.clear_clicked,
+            disabled=not any(task.completed for task in self.all_tasks),
+        )
+
+        self.uncheck_completed_tasks = ft.PopupMenuItem(
+            icon=ft.Icons.UNARCHIVE,
+            text="Desmarcar Concluídas",
+            on_click=self.uncheck_clicked,
             disabled=not any(task.completed for task in self.all_tasks),
         )
 
@@ -106,7 +105,8 @@ class TodoApp(ft.Column):
                         ft.IconButton(icon=ft.Icons.ADD, on_click=self.add_clicked),
                         ft.PopupMenuButton(
                             items=[
-                                self.limpar_concluidas_item,
+                                self.clear_completed_tasks,
+                                self.uncheck_completed_tasks,
                             ]
                         ),
                     ],
@@ -125,7 +125,6 @@ class TodoApp(ft.Column):
                                 alignment=ft.MainAxisAlignment.START,
                                 controls=[
                                     self.items_left,
-                                    # self.clear_completed_tasks_buttom,
                                 ],
                             ),
                         ],
@@ -190,15 +189,13 @@ class TodoApp(ft.Column):
                 self.page, f"{len(tasks_to_complete)} tarefas marcadas como concluídas!"
             )
 
-        confirm_dialog = ConfirmDialog(
+        ConfirmDialog(
             self.page,
             "Confirmar",
             f"Deseja marcar todas as tarefas visíveis como concluídas?",
             confirm_complete,
             True,
-        )
-
-        confirm_dialog.open()
+        ).open()
 
     async def initialize_async(self):
         await self.initial_resize()
@@ -274,7 +271,11 @@ class TodoApp(ft.Column):
     def clear_completed_tasks_buttom_enable(self):
         enabled = not any(task.completed for task in self.all_tasks)
         # Habilita/Desabilita o Limpar Concluídas
-        self.limpar_concluidas_item.disabled = enabled
+        (
+            self.clear_completed_tasks.disabled,
+            self.uncheck_completed_tasks.disabled,
+        ) = (enabled, enabled)
+
         self.update()
 
     async def add_clicked(self, event: ft.ControlEvent):
@@ -314,6 +315,35 @@ class TodoApp(ft.Column):
         self.clear_completed_tasks_buttom_enable()
         SnackBar(self.page, f"Tarefa '{task.task_name}' removida com sucesso!")
 
+    async def uncheck_clicked(self, event: ft.ControlEvent):
+        if not any(task.completed for task in self.all_tasks):
+            SnackBar(self.page, "Não há tarefas concluídas para desmarcar.")
+            return
+
+        async def confirm_uncheck():
+            tasks_to_uncheck = [task for task in self.all_tasks if task.completed]
+
+            for task in tasks_to_uncheck:
+                task.completed = False
+                task.update_task_appearance()
+                if task.task_id:
+                    await update_task_status(task.task_id, False)
+
+            self.update_tasks_view()
+            self.completed_tasks(self.all_tasks)
+            self.clear_completed_tasks_buttom_enable()
+            self.page.update()
+
+            SnackBar(self.page, f"{len(tasks_to_uncheck)} tarefas desmarcadas!")
+
+        ConfirmDialog(
+            self.page,
+            "Confirmar",
+            "Tem certeza que deseja desmarcar todas as tarefas concluídas?",
+            confirm_uncheck,
+            True,
+        ).open()
+
     async def clear_clicked(self, event: ft.ControlEvent):
         async def confirm_clear():
             tasks_to_remove = [task for task in self.all_tasks if task.completed]
@@ -329,24 +359,25 @@ class TodoApp(ft.Column):
             self.clear_completed_tasks_buttom_enable()
             SnackBar(self.page, f"{len(tasks_to_remove)} tarefas concluídas removidas!")
 
-        confirm_dialog = ConfirmDialog(
+        ConfirmDialog(
             self.page,
             "Confirmar",
             "Tem certeza que deseja limpar todas as tarefas concluídas?",
             confirm_clear,
             True,
-        )
-
-        confirm_dialog.open()
+        ).open()
 
     def update_tasks_view(self):
         self.tasks_view.controls.clear()
 
         if self.filter.selected_index == 0:
+            # todas as tarefas
             filtered_tasks = self.all_tasks
         elif self.filter.selected_index == 1:
+            # tarefas não concluídas (compreensão de lista)
             filtered_tasks = [task for task in self.all_tasks if not task.completed]
         else:
+            # tarefas concluídas (compreensão de lista)
             filtered_tasks = [task for task in self.all_tasks if task.completed]
 
         self.tasks_view.controls.extend(filtered_tasks)
