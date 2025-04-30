@@ -6,11 +6,17 @@ from classes.TodoApp import TodoApp
 
 def setup_page(page: ft.Page):
     theme: str = get_current_theme(1)
+    full_hd_res_width: int = 1920
+    full_hd_res_height: int = 1080
 
     page.title = "Minhas Tarefas"
     page.theme_mode = theme
-    page.window.height = 900
+    # size numbers
     page.window.width = 600
+    page.window.height = 900
+    # position numbers
+    page.window.left = (full_hd_res_width - page.window.width) / 2
+    page.window.top = (full_hd_res_height - page.window.height) / 2
     page.update()
 
 

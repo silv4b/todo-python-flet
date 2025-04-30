@@ -1,6 +1,7 @@
 import flet as ft
-from flet import FloatingActionButtonLocation
 import asyncio
+from flet import FloatingActionButtonLocation
+from utils import get_current_datetime
 from classes.Task import Task
 from classes.ConfirmationDialog import ConfirmDialog
 from classes.SnackBar import SnackBar
@@ -24,7 +25,7 @@ class TodoApp(ft.Column):
         self.all_tasks = []
 
         self.page.floating_action_button = ft.FloatingActionButton(
-            icon=ft.Icons.CHECK,
+            icon=ft.Icons.DONE_ALL,
             elevation=90,
             hover_elevation=40,
             mini=False,
@@ -75,13 +76,13 @@ class TodoApp(ft.Column):
 
         self.clear_completed_tasks = ft.PopupMenuItem(
             icon=ft.Icons.REMOVE_DONE,
-            text="Limpar Concluídas",
+            text="Remover Concluídas",
             on_click=self.clear_clicked,
             disabled=not any(task.completed for task in self.all_tasks),
         )
 
         self.uncheck_completed_tasks = ft.PopupMenuItem(
-            icon=ft.Icons.UNARCHIVE,
+            icon=ft.Icons.UNPUBLISHED_OUTLINED,
             text="Desmarcar Concluídas",
             on_click=self.uncheck_clicked,
             disabled=not any(task.completed for task in self.all_tasks),
@@ -94,7 +95,7 @@ class TodoApp(ft.Column):
                 ft.Row(
                     alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
                     controls=[
-                        ft.Text("Tarefas", size=26, weight="bold"),
+                        ft.Text("Minhas Tarefas", size=26, weight="bold"),
                         self.toggle_theme_button,
                     ],
                 ),
@@ -105,8 +106,8 @@ class TodoApp(ft.Column):
                         ft.IconButton(icon=ft.Icons.ADD, on_click=self.add_clicked),
                         ft.PopupMenuButton(
                             items=[
-                                self.clear_completed_tasks,
                                 self.uncheck_completed_tasks,
+                                self.clear_completed_tasks,
                             ]
                         ),
                     ],
@@ -178,7 +179,12 @@ class TodoApp(ft.Column):
                 task.display_task.value = True
                 task.update_task_appearance()
                 if task.task_id:
-                    await update_task_status(task.task_id, True)
+                    await update_task_status(
+                        task_id=task.task_id,
+                        completed=True,
+                        updated_at=get_current_datetime(),
+                        completed_at=get_current_datetime(),
+                    )
 
             self.update_tasks_view()
             self.completed_tasks(self.all_tasks)
@@ -208,7 +214,8 @@ class TodoApp(ft.Column):
 
     async def task_edit(self, task: Task, new_name: str):
         if task.task_id:
-            await update_task_name(task.task_id, new_name)
+            await update_task_name(task.task_id, new_name, get_current_datetime())
+
         self.update_tasks_view()
         SnackBar(self.page, f"Tarefa atualizada para '{new_name}'.")
 
@@ -232,13 +239,15 @@ class TodoApp(ft.Column):
         for task in db_tasks:
             self.all_tasks.append(
                 Task(
-                    self.page,
-                    task.name,
-                    self.status_changed,
-                    self.task_delete,
-                    self.task_edit,
-                    task.completed,
-                    task.id,
+                    page=self.page,
+                    task_id=task.id,
+                    task_name=task.name,
+                    task_status_change=self.status_changed,
+                    task_delete=self.task_delete,
+                    task_edit=self.task_edit,
+                    completed=task.completed,
+                    added_at=task.added_at,
+                    updated_at=task.updated_at,
                 )
             )
         self.update_tasks_view()
@@ -279,16 +288,24 @@ class TodoApp(ft.Column):
         self.update()
 
     async def add_clicked(self, event: ft.ControlEvent):
+
         if self.new_task.value.strip():
-            db_task = await add_task(self.new_task.value.strip())
+            db_task = await add_task(
+                name=self.new_task.value.strip(),
+                added=get_current_datetime(),
+                updated=get_current_datetime(),
+            )
             task = Task(
-                self.page,
-                db_task.name,
-                self.status_changed,
-                self.task_delete,
-                self.task_edit,
-                False,
-                db_task.id,
+                page=self.page,
+                task_id=db_task.id,
+                task_name=db_task.name,
+                task_status_change=self.status_changed,
+                task_delete=self.task_delete,
+                task_edit=self.task_edit,
+                completed=False,
+                added_at=get_current_datetime(),
+                updated_at=get_current_datetime(),
+                # completed_at -> vazio
             )
             self.all_tasks.append(task)
             self.new_task.value = ""
@@ -300,7 +317,12 @@ class TodoApp(ft.Column):
             SnackBar(self.page, f"Tarefa '{task.task_name}' adicionada com sucesso!")
 
     async def status_changed(self, task: Task):
-        await update_task_status(task.task_id, task.completed)
+        await update_task_status(
+            task_id=task.task_id,
+            completed=task.completed,
+            updated_at=get_current_datetime(),
+            completed_at=get_current_datetime(),
+        )
         self.update_tasks_view()
         self.clear_completed_tasks_buttom_enable()
         self.completed_tasks(self.all_tasks)
@@ -327,7 +349,12 @@ class TodoApp(ft.Column):
                 task.completed = False
                 task.update_task_appearance()
                 if task.task_id:
-                    await update_task_status(task.task_id, False)
+                    await update_task_status(
+                        task_id=task.task_id,
+                        completed=False,
+                        updated_at=get_current_datetime(),
+                        completed_at=get_current_datetime(),
+                    )
 
             self.update_tasks_view()
             self.completed_tasks(self.all_tasks)

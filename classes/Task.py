@@ -9,21 +9,29 @@ class Task(ft.Column):
     def __init__(
         self,
         page: ft.Page,
+        task_id: int,
         task_name: str,
         task_status_change: Callable[[Self], None],
         task_delete: Callable[["Task"], None],
-        task_edit: Callable[["Task", str], None],  # Novo callback para edição
-        completed: bool = False,
-        task_id: int = None,
+        task_edit: Callable[["Task", str], None],
+        completed: bool,
+        added_at: str,
+        updated_at: str,
+        completed_at: str = "",
     ):
         super().__init__()
+        # page
         self.page = page
-        self.completed = completed
+        # task itself
+        self.task_id = task_id
         self.task_name = task_name
         self.task_status_change = task_status_change
         self.task_delete = task_delete
         self.task_edit = task_edit  # Callback para edição
-        self.task_id = task_id  # ID do banco de dados
+        self.completed = completed
+        self.added_at = added_at
+        self.completed_at = completed_at
+        # column
         self.spacing = 10
         self.visible = True
 
@@ -52,12 +60,12 @@ class Task(ft.Column):
                         ft.PopupMenuButton(
                             items=[
                                 ft.PopupMenuItem(
-                                    icon=ft.Icons.EDIT,
+                                    icon=ft.Icons.EDIT_OUTLINED,
                                     text="Editar Tarefa",
                                     on_click=self.edit_clicked,
                                 ),
                                 ft.PopupMenuItem(
-                                    icon=ft.Icons.DELETE,
+                                    icon=ft.Icons.DELETE_OUTLINE,
                                     text="Remover Tarefa",
                                     on_click=self.delete_clicked,
                                 ),

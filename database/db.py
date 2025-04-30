@@ -10,6 +10,9 @@ class Task:
     id: int
     name: str
     completed: bool
+    added_at: str
+    completed_at: str
+    updated_at: str
 
 
 @dataclass
@@ -35,7 +38,10 @@ async def init_db():
             CREATE TABLE IF NOT EXISTS tasks (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 name TEXT NOT NULL,
-                completed INTEGER DEFAULT 0
+                completed INTEGER DEFAULT 0,
+                added_at TEXT NOT NULL,
+                completed_at TEXT,
+                updated_at TEXT
             );
             """
         )
@@ -60,15 +66,23 @@ async def init_db():
         await conn.commit()
 
 
-async def add_task(name: str) -> Task:
+async def add_task(name: str, added: str, updated: str) -> Task:
     """Adiciona uma nova tarefa"""
     async with aiosqlite.connect(DATABASE_FILE) as conn:
         async with conn.cursor() as cursor:
             await cursor.execute(
-                "INSERT INTO tasks (name, completed) VALUES (?,?)", (name, 0)
+                "INSERT INTO tasks (name, completed, added_at, updated_at) VALUES (?,?,?,?)",
+                (name, 0, added, updated),
             )
             await conn.commit()
-            return Task(id=cursor.lastrowid, name=name, completed=False)
+            return Task(
+                id=cursor.lastrowid,
+                name=name,
+                completed=False,
+                added_at=added,
+                completed_at="",
+                updated_at=updated,
+            )
 
 
 async def get_tasks() -> List[Task]:
@@ -76,11 +90,18 @@ async def get_tasks() -> List[Task]:
     async with aiosqlite.connect(DATABASE_FILE) as conn:
         conn.row_factory = aiosqlite.Row
         async with conn.execute(
-            "SELECT id, name, completed FROM tasks ORDER BY id"
+            "SELECT id, name, completed, added_at, completed_at, updated_at FROM tasks ORDER BY id"
         ) as cursor:
             rows = await cursor.fetchall()
             return [
-                Task(id=row["id"], name=row["name"], completed=bool(row["completed"]))
+                Task(
+                    id=row["id"],
+                    name=row["name"],
+                    completed=bool(row["completed"]),
+                    added_at=row["added_at"],
+                    completed_at=row["completed_at"],
+                    updated_at=row["updated_at"],
+                )
                 for row in rows
             ]
 
@@ -103,20 +124,30 @@ async def delete_many_tasks(task_ids: List[int]):
         await conn.commit()
 
 
-async def update_task_status(task_id: int, completed: bool):
+async def update_task_status(
+    task_id: int, completed: bool, updated_at: str, completed_at: str
+):
     """Atualiza o status"""
     async with aiosqlite.connect(DATABASE_FILE) as conn:
         await conn.execute(
-            "UPDATE tasks SET completed = ? WHERE id = ?", (completed, task_id)
+            "UPDATE tasks SET completed = ?, updated_at = ?, completed_at = ? WHERE id = ?",
+            (
+                completed,
+                updated_at,
+                completed_at if completed else None,
+                task_id,
+            ),
         )
+
         await conn.commit()
 
 
-async def update_task_name(task_id: int, new_name: str):
+async def update_task_name(task_id: int, new_name: str, updated_at: str):
     """Atualiza o nome"""
     async with aiosqlite.connect(DATABASE_FILE) as conn:
         await conn.execute(
-            "UPDATE tasks SET name = ? WHERE id = ?", (new_name, task_id)
+            "UPDATE tasks SET name = ?, updated_at = ? WHERE id = ?",
+            (new_name, updated_at, task_id),
         )
         await conn.commit()
 
