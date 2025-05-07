@@ -1,8 +1,8 @@
 import asyncio
 from typing import Callable, Self
 import flet as ft
-from classes.SnackBar import SnackBar
-from classes.ConfirmationDialog import ConfirmDialog
+from classes import SnackBar
+from classes import ConfirmDialog
 
 
 class Task(ft.Column):

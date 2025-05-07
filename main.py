@@ -1,7 +1,7 @@
 import flet as ft
 import asyncio
-from database.db import init_db, get_current_theme
-from classes.TodoApp import TodoApp
+from database import init_db, get_current_theme
+from classes import TodoApp
 
 
 def setup_page(page: ft.Page):

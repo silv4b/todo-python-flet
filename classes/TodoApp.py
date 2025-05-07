@@ -2,11 +2,11 @@ import flet as ft
 import asyncio
 from flet import FloatingActionButtonLocation
 from utils import get_current_datetime
-from classes.Task import Task
-from classes.ConfirmationDialog import ConfirmDialog
-from classes.SnackBar import SnackBar
-from classes.TextField import TextField
-from database.db import (
+from classes import Task
+from classes import ConfirmDialog
+from classes import SnackBar
+from classes import TextField
+from database import (
     add_task,
     get_tasks,
     update_task_status,
